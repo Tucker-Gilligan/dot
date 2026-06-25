@@ -7,17 +7,17 @@ argument-hint: "[base-branch for PR description, e.g. main] (omit for a commit m
 # Commit & PR writer
 
 Generates commit messages and PR descriptions **from the real diff**, in the repo's existing
-style. A script gathers the context (free) so the model only writes the prose. This file is reference material — reference it from an agent body via `#file:.github/skills/commit-pr-writer/SKILL.md`.
+style. A script gathers the context (free) so the model only writes the prose. This file is reference material — reference it from an agent body via `#file:${userHome}/Library/Application Support/Code/User/prompts/skills/commit-pr-writer/SKILL.md`.
 
 ## How to run
-To run this skill's script, ask the active agent to execute `execute/runInTerminal` with one of:
+The script lives outside whatever repo you're currently in (it's part of the user-level Copilot config). Invoke it by absolute path through the `~/.copilot/skills/` symlink — that resolves to the canonical version in the dotfiles repo, regardless of the active workspace:
 
 ```bash
-bash .github/skills/commit-pr-writer/scripts/gather.sh         # commit message for staged changes
-bash .github/skills/commit-pr-writer/scripts/gather.sh main    # PR description for branch vs origin/main
+bash "$HOME/.copilot/skills/commit-pr-writer/scripts/gather.sh"         # commit message for staged changes
+bash "$HOME/.copilot/skills/commit-pr-writer/scripts/gather.sh" main    # PR description for branch vs origin/main
 ```
 
-Script: [gather.sh](./scripts/gather.sh). Read-only; never commits or pushes. It also prints recent commit titles — **match that style** (prefix casing, scope usage, length).
+VS Code may show a one-time prompt the first time it runs a script from outside the active workspace — approve it. Read-only; never commits or pushes. It also prints recent commit titles — **match that style** (prefix casing, scope usage, length).
 
 ## Commit message format (Conventional Commits)
 ```

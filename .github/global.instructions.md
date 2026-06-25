@@ -59,4 +59,4 @@ Run the **`/pr-prep`** prompt on your branch. Don't open a PR you can't explain.
 - **MID**: `Claude Sonnet 4.6` → fallback `GPT-5.5`
 - **LOW**: `GPT-5 mini` → fallback `Claude Sonnet 4.6`
 
-Agents live in `~/.copilot/agents/` (`*.agent.md`). The `/pr-prep` prompt and skill reference docs (`adr`, `commit-pr-writer`, `diff-digest`) live alongside this file in the user prompts folder (`${userHome}/Library/Application Support/Code/User/prompts/`).
+Agents live in `~/.copilot/agents/` (`*.agent.md`). The `/pr-prep` prompt and its supporting skill reference docs (`commit-pr-writer`, `diff-digest`) live alongside this file in the user prompts folder (`${userHome}/Library/Application Support/Code/User/prompts/`).

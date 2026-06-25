@@ -23,7 +23,7 @@ If the prior turn contains a **Router handoff brief**, open by restating the doc
 
 ## Common deliverables
 - **README**: what it is, quick start, how to run/test, project layout, gotchas.
-- **ADR**: use the **adr** skill ([#file:.github/skills/adr/SKILL.md](.github/skills/adr/SKILL.md)) — context, decision, alternatives, consequences. One decision per record, immutable once accepted.
+- **ADR**: context, decision, alternatives, consequences. One decision per record, immutable once accepted (supersede with a new ADR rather than editing). Conventional location: `docs/adr/NNNN-short-title.md`.
 - **Runbook**: symptoms → diagnosis steps → remediation → escalation, for a specific failure mode.
 - **API docs**: endpoints/inputs/outputs/errors/auth, with examples.
 - **Code comments**: explain *why*, not *what*; only where the intent isn't obvious.

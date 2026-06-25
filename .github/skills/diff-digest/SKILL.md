@@ -7,7 +7,7 @@ argument-hint: "[base-branch] (optional, e.g. main)"
 # Diff Digest
 
 This skill gathers everything needed to review a change set **deterministically via a script**,
-so the model spends tokens on judgment — not on reading the raw diff line by line. This file is reference material — reference it from an agent body via `#file:.github/skills/diff-digest/SKILL.md`.
+so the model spends tokens on judgment — not on reading the raw diff line by line. This file is reference material — reference it from an agent body via `#file:${userHome}/Library/Application Support/Code/User/prompts/skills/diff-digest/SKILL.md`.
 
 ## When to use
 - Preparing a PR / pre-review self-check.
@@ -15,18 +15,16 @@ so the model spends tokens on judgment — not on reading the raw diff line by l
 - As the first step the **PR Prep** prompt runs.
 
 ## How to run
-To run this skill's script, ask the active agent to execute `execute/runInTerminal` with one of (read-only — no commits, pushes, or resets):
+The script lives outside whatever repo you're currently in (it's part of the user-level Copilot config). Invoke it by absolute path through the `~/.copilot/skills/` symlink — that resolves to the canonical version in the dotfiles repo, regardless of the active workspace. Read-only — no commits, pushes, or resets:
 
 ```bash
-bash .github/skills/diff-digest/scripts/collect-diff.sh            # uncommitted work vs HEAD
-bash .github/skills/diff-digest/scripts/collect-diff.sh main       # this branch vs origin/main
+bash "$HOME/.copilot/skills/diff-digest/scripts/collect-diff.sh"            # uncommitted work vs HEAD
+bash "$HOME/.copilot/skills/diff-digest/scripts/collect-diff.sh" main       # this branch vs origin/main
 ```
 
-If the user hasn't said which base to compare against and the branch clearly targets one
-(e.g. a feature branch off `main`), pass that base. Otherwise run with no argument to digest
-uncommitted work. Ask only if it's genuinely ambiguous.
+VS Code may show a one-time prompt the first time it runs a script from outside the active workspace — approve it. Tune `MAX_DIFF_LINES` (env var) for very large diffs: `MAX_DIFF_LINES=8000 bash "$HOME/.copilot/skills/diff-digest/scripts/collect-diff.sh" main`.
 
-See the script: [collect-diff.sh](./scripts/collect-diff.sh). Tune `MAX_DIFF_LINES` (env var) for very large diffs.
+If the user hasn't said which base to compare against and the branch clearly targets one (e.g. a feature branch off `main`), pass that base. Otherwise run with no argument to digest uncommitted work. Ask only if it's genuinely ambiguous.
 
 ## What the script outputs
 1. **Change stat** and **changed-files** list.
