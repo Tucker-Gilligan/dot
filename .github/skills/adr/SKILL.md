@@ -9,6 +9,8 @@ argument-hint: "[short title of the decision]"
 An ADR captures one significant decision so future engineers understand *why*, not just *what*.
 Keep it short, factual, and immutable once accepted (supersede with a new ADR rather than editing).
 
+This file is reference material — reference it from an agent body via `#file:.github/skills/adr/SKILL.md`. There is no script; the deliverable is the ADR file itself, produced by the active agent (typically **Doc Writer**) using `edit/editFiles`.
+
 ## How to use
 1. Find existing ADRs (commonly `docs/adr/` or `docs/decisions/`). Match their numbering and format if present; otherwise create `docs/adr/NNNN-short-title.md` (zero-padded, incrementing).
 2. Fill in the template below. Be concrete about alternatives and trade-offs — that's the part future readers need most.
