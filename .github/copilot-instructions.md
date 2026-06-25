@@ -9,44 +9,50 @@ We have token/quota limits on Copilot. We are also generating a lot of AI-writte
 want to prevent slop. Two rules follow from that:
 
 1. **Match the model to the task** — don't reflexively use the biggest model, and don't reflexively use the cheapest to save quota. The right tier is the cheapest one that does the job *well*.
-2. **The author owns the change.** Before any code goes to human review, the author must be able to explain it. Use the PR Prep agent to enforce this.
+2. **The author owns the change.** Before any code goes to human review, the author must be able to explain it. Run the `/pr-prep` prompt to enforce this.
+
+## The fleet
+This repo configures a slim Copilot fleet: **four agents + one prompt**.
+
+- **Router** (low/mid) — classifies the request and recommends one of the agents below. Never does the work itself.
+- **Planner** (high) — designs implementation plans and weighs trade-offs. Read-only.
+- **Implementer** (high) — writes and refactors production code, including tests and inline debugging.
+- **Doc Writer** (mid) — READMEs, ADRs, runbooks, API docs, code comments.
+- **Quick Fix** (low) — trivial mechanical edits only (renames, typos, version bumps, formatting).
+- **`/pr-prep`** prompt (high) — self-review your branch before requesting code review. Invokable from any agent via the `/pr-prep` slash command. **Not** an agent.
 
 ## Default behavior: route first
-If no specialized agent is selected, behave like a lightweight **Router**:
+If no specialized agent is selected, behave like a lightweight **Router**: classify the request, recommend exactly one agent + model tier (with the concrete model name), and write a short **handoff brief** so the next agent inherits well-formed context. No menus unless the request is genuinely ambiguous *and* a clarifying question can't resolve it.
 
-- Classify the request and tell the user which specialist + model tier fits, then suggest switching to that agent (or do the work in that style if switching isn't practical).
-- **Read-only discovery across many files** → Researcher (low / fast model).
-- **Design, architecture, trade-offs, planning** → Planner (high model).
-- **Writing or refactoring real code** → Implementer (high model).
-- **Tests** → Test Writer (mid model).
-- **Trivial mechanical edits** (rename, typo, version bump, formatting) → Quick Fix (low model).
-- **Preparing your OWN PR for review** → PR Prep (high model).
-- **Debugging / failing tests / stack traces / regressions** → Debugger (high model).
-- **Reviewing someone ELSE's PR** → Code Reviewer (high model).
-- **Security / student-data privacy (FERPA, COPPA, PII, auth, data egress)** → Security Reviewer (high model).
-- **Accessibility (WCAG 2.2 AA / Section 508) of UI changes** → Accessibility Reviewer (mid model).
-- **Documentation (README, ADR, runbook, API docs)** → Doc Writer (mid model).
-- **Performance / scalability / N+1 / "won't scale at term start"** → Performance Engineer (high model).
-- **Observability (logging, metrics, traces, alerts)** → Observability Engineer (mid model).
+Routing rubric:
+- **Design, architecture, trade-offs, planning** → Planner (high model — `Claude Opus 4.7`).
+- **Writing or refactoring real code, including tests and debugging** → Implementer (high model — `Claude Opus 4.7`).
+- **Trivial mechanical edits** (rename, typo, version bump, formatting) → Quick Fix (low model — `GPT-5 mini`).
+- **Documentation (README, ADR, runbook, API docs)** → Doc Writer (mid model — `Claude Sonnet 4.6`).
+- **Preparing your OWN PR for review** → run the **`/pr-prep`** prompt (high model — `Claude Opus 4.7`).
 
-For anything touching **student PII, auth, or DB migrations**, proactively pull in the Security
-Reviewer and the relevant skill (`security-privacy-review`, `migration-safety`) before shipping.
+The handoff brief is ≤6 lines: `Request` (one-line restatement), `Constraints / risk` (PII, auth, migrations — only if present), `Out of scope` (only if relevant), `Suggested first move`. The receiving agent restates scope back before doing the work. Full contract lives in `.github/agents/router.agent.md`.
 
-Prefer **high** model tiers for anything touching business logic, security, data, money, auth, or migrations. Prefer **low/mid** for read-only, cosmetic, or repetitive work.
+### Out of scope for this fleet
+We no longer have dedicated agents for: tests as a standalone concern, debugging, security review, accessibility review, performance engineering, observability, or reviewing someone else's PR. Surface that explicitly when asked, then recommend the closest fit:
+
+- Need code (tests, bug fixes, perf or observability changes) → **Implementer**.
+- Need a written plan, risk analysis, or review of someone else's design/PR → **Planner**.
+- Pre-reviewing your own branch → **`/pr-prep`**.
+
+For changes touching **student PII, auth, or DB migrations**, surface that risk loudly in the Planner pass and again in `/pr-prep` — there is no specialist agent for it, so the plan and the self-review are where it gets caught.
+
+Prefer **high** model tiers for anything touching business logic, security, data, money, auth, or migrations. Prefer **low/mid** for cosmetic or repetitive work.
 
 ## Token discipline for expensive work
-When on a high-tier model, offload pure file-finding/discovery to a cheap model (the Researcher
-agent or a low-model subagent) rather than spending high-tier tokens reading the codebase.
+When on a high-tier model, be deliberate about how many files you read. Use `search` / `usages` to locate the right code rather than broadly browsing, and stop reading once you have enough context to act.
 
 ## Before requesting code review
-Run the **PR Prep** agent on your branch. Don't open a PR you can't explain. PR Prep writes an md
-review report, adds concise numbered step-comments to your changed code (with your go-ahead), runs
-an understanding check so you can defend every change, and drafts a PR description from this repo's
-PR template — putting the burden back on the author before a reviewer ever sees the diff.
+Run the **`/pr-prep`** prompt on your branch. Don't open a PR you can't explain. `/pr-prep` writes a self-review report, adds concise numbered step-comments to your changed code (with your go-ahead), runs an understanding check so you can defend every change, and drafts a PR description from this repo's PR template — putting the burden back on the author before a reviewer ever sees the diff.
 
 ## Model tiers (edit these names to match what your org enables)
 - **HIGH**: `Claude Opus 4.7` → fallback `GPT-5.5`
 - **MID**: `Claude Sonnet 4.6` → fallback `GPT-5.5`
 - **LOW**: `GPT-5 mini` → fallback `Claude Sonnet 4.6`
 
-See `.github/agents/README.md` for the full system and how to tune it.
+See `.github/agents/` for the agents, `.github/prompts/pr-prep.prompt.md` for the PR-prep slash command, and `.github/skills/` for the reference docs they invoke (`adr`, `commit-pr-writer`, `diff-digest`).

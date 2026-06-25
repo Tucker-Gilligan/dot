@@ -7,17 +7,17 @@ argument-hint: "[base-branch for PR description, e.g. main] (omit for a commit m
 # Commit & PR writer
 
 Generates commit messages and PR descriptions **from the real diff**, in the repo's existing
-style. A script gathers the context (free) so the model only writes the prose.
+style. A script gathers the context (free) so the model only writes the prose. This file is reference material — reference it from an agent body via `#file:.github/skills/commit-pr-writer/SKILL.md`.
 
 ## How to run
-Read-only; never commits or pushes.
+To run this skill's script, ask the active agent to execute `execute/runInTerminal` with one of:
 
 ```bash
 bash .github/skills/commit-pr-writer/scripts/gather.sh         # commit message for staged changes
 bash .github/skills/commit-pr-writer/scripts/gather.sh main    # PR description for branch vs origin/main
 ```
 
-Script: [gather.sh](./scripts/gather.sh). It also prints recent commit titles — **match that style** (prefix casing, scope usage, length).
+Script: [gather.sh](./scripts/gather.sh). Read-only; never commits or pushes. It also prints recent commit titles — **match that style** (prefix casing, scope usage, length).
 
 ## Commit message format (Conventional Commits)
 ```
@@ -62,4 +62,4 @@ Default format (when no repo template exists):
 - Derive everything from the diff. Don't invent changes that aren't there, and don't omit ones that are.
 - Keep it scannable — a reviewer should grasp the PR in 20 seconds.
 - If the diff suggests an undocumented behavior change, surface it rather than smoothing it over.
-- For a full risk pass before review, use the **diff-digest** skill / **PR Prep** agent; this skill is about the write-up, not the audit.
+- For a full risk pass before review, use the **diff-digest** skill / **PR Prep** prompt; this skill is about the write-up, not the audit.
