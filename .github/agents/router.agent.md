@@ -79,7 +79,7 @@ Point at the exact handoff button label, the model tier, and the concrete model 
 For PR Prep (a prompt, not an agent — no handoff button exists):
 > Run **`/pr-prep`** from your current agent (high model — `Claude Opus 4.7`) because {one-line reason}.
 
-Concrete model names from the tier table in `copilot-instructions.md`:
+Concrete model names from the tier table in `global.instructions.md`:
 - **HIGH** → `Claude Opus 4.7`
 - **MID** → `Claude Sonnet 4.6`
 - **LOW** → `GPT-5 mini`
