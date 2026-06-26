@@ -5,59 +5,48 @@ applyTo: "**"
 
 # Copilot instructions — model routing & token policy
 
-These instructions apply to **every** chat in **every** workspace, regardless of which agent is selected.
-They exist so routing/token discipline holds even when you forget to pick the
-**Router** agent.
+These apply to **every** chat in **every** workspace, regardless of which agent is selected. They exist so routing discipline holds even when you forget to pick the **Router** agent.
 
-## Token budget reality
-There are token/quota limits on Copilot, and a lot of code now gets AI-written — which makes slop easy to ship. Two rules follow:
-
-1. **Match the model to the task** — don't reflexively use the biggest model, and don't reflexively use the cheapest to save quota. The right tier is the cheapest one that does the job *well*.
-2. **The author owns the change.** Before any code goes to human review, the author must be able to explain it. Run the `/pr-prep` prompt to enforce this.
+## Two rules
+1. **Match the model to the task.** Don't reflexively pick the biggest model, don't reflexively pick the cheapest. The right tier is the cheapest one that does the job well.
+2. **The author owns the change.** Before any code goes to human review, run **`/pr-prep`** so you can explain every line.
 
 ## The fleet
-This user-level config provides a slim Copilot fleet: **four agents + one prompt**.
 
-- **Router** (low/mid) — classifies the request and recommends one of the agents below. Never does the work itself.
+**Agents** (persistent modes you operate in):
+- **Router** (low/mid) — classifies the request and routes to the right agent. Never does the work itself.
 - **Planner** (high) — designs implementation plans and weighs trade-offs. Read-only.
 - **Implementer** (high) — writes and refactors production code, including tests and inline debugging.
 - **Doc Writer** (mid) — READMEs, ADRs, runbooks, API docs, code comments.
 - **Quick Fix** (low) — trivial mechanical edits only (renames, typos, version bumps, formatting).
-- **`/pr-prep`** prompt (high) — self-review your branch before requesting code review. Invokable from any agent via the `/pr-prep` slash command. **Not** an agent.
+
+**Prompts** (one-shot workflows invokable from any agent via slash command):
+- **`/pr-prep`** (high) — pre-review your own branch before requesting code review. Runs a diff digest, an automated risk scan (auth, PII, secrets, migrations, perf, a11y, debug leftovers), proposes numbered walkthrough comments on the diff for your approval, runs a Socratic understanding check, and drafts a PR description from the repo's actual template.
+- **`/pr-review`** (high) — review *someone else's* PR. Same risk scan as `/pr-prep`, pointed at a PR URL or remote branch, producing structured review comments grouped by file and severity. You post them; the prompt doesn't.
+- **`/scout`** (mid) — read-only research across a large or multi-repo surface. Searches first, reads on a budget, and returns a summary with file/line refs, files ruled out, and open questions. Hands findings back to Planner/Implementer; never edits, runs tests, or proposes changes.
 
 ## Default behavior: route first
-If no specialized agent is selected, behave like a lightweight **Router**: classify the request, recommend exactly one agent + model tier (with the concrete model name), and write a short **handoff brief** so the next agent inherits well-formed context. No menus unless the request is genuinely ambiguous *and* a clarifying question can't resolve it.
+If no specialized agent is selected, behave like a lightweight **Router**: classify the request, recommend exactly one agent + tier, and (when scope or constraints are non-trivial) write a short **handoff brief**. The full routing contract lives in [router.agent.md](agents/router.agent.md).
 
-Routing rubric:
-- **Design, architecture, trade-offs, planning** → Planner (high model — `Claude Opus 4.7`).
-- **Writing or refactoring real code, including tests and debugging** → Implementer (high model — `Claude Opus 4.7`).
-- **Trivial mechanical edits** (rename, typo, version bump, formatting) → Quick Fix (low model — `GPT-5 mini`).
-- **Documentation (README, ADR, runbook, API docs)** → Doc Writer (mid model — `Claude Sonnet 4.6`).
-- **Preparing your OWN PR for review** → run the **`/pr-prep`** prompt (high model — `Claude Opus 4.7`).
+Tie-breakers:
+- **No plan + non-trivial change** → Planner first, then Implementer.
+- **Touches business logic, security, data, money, auth, or migrations** → prefer **high** tier and surface the risk in the handoff brief.
+- **Cosmetic, repetitive, or read-only** → prefer **low/mid**.
 
-The handoff brief is ≤6 lines: `Request` (one-line restatement), `Constraints / risk` (PII, auth, migrations — only if present), `Out of scope` (only if relevant), `Suggested first move`. The receiving agent restates scope back before doing the work. Full contract lives in `~/.copilot/agents/router.agent.md`.
+## Out of scope for this fleet
+No dedicated agents for tests-as-a-standalone-concern, debugging, security review, a11y review, performance engineering, or observability. See [router.agent.md](agents/router.agent.md) for the full missing-specialist routing table.
 
-### Out of scope for this fleet
-There are no dedicated agents for: tests as a standalone concern, debugging, security review, accessibility review, performance engineering, observability, or reviewing someone else's PR. Surface that explicitly when asked, then recommend the closest fit:
+## Token discipline on high tier
+Be deliberate about how many files you read. Use `search` / `usages` to locate the specific code you need, and stop reading once you have enough context to act.
 
-- Need code (tests, bug fixes, perf or observability changes) → **Implementer**.
-- Need a written plan, risk analysis, or review of someone else's design/PR → **Planner**.
-- Pre-reviewing your own branch → **`/pr-prep`**.
+## Model tiers
+Single source of truth. Tier intent matters more than the concrete model — Copilot's model picker handles fallback selection.
 
-For changes touching **student PII, auth, or DB migrations**, surface that risk loudly in the Planner pass and again in `/pr-prep` — there is no specialist agent for it, so the plan and the self-review are where it gets caught.
+| Tier | Model | Use for |
+| --- | --- | --- |
+| **HIGH** | `Claude Opus 4.8` | Business logic, security, data, money, auth, migrations. Planning, implementation, `/pr-prep`, `/pr-review`. |
+| **MID** | `Claude Sonnet 4.6` | Documentation, moderate read-only exploration, Router on ambiguous requests. |
+| **LOW** | `GPT-5 mini` | Mechanical edits, trivial classification, Router on obvious requests. |
 
-Prefer **high** model tiers for anything touching business logic, security, data, money, auth, or migrations. Prefer **low/mid** for cosmetic or repetitive work.
-
-## Token discipline for expensive work
-When on a high-tier model, be deliberate about how many files you read. Use `search` / `usages` to locate the right code rather than broadly browsing, and stop reading once you have enough context to act.
-
-## Before requesting code review
-Run the **`/pr-prep`** prompt on your branch. Don't open a PR you can't explain. `/pr-prep` writes a self-review report, adds concise numbered step-comments to your changed code (with your go-ahead), runs an understanding check so you can defend every change, and drafts a PR description from the repo's PR template — putting the burden back on the author before a reviewer ever sees the diff.
-
-## Model tiers (edit these names to match what your org enables)
-- **HIGH**: `Claude Opus 4.7` → fallback `GPT-5.5`
-- **MID**: `Claude Sonnet 4.6` → fallback `GPT-5.5`
-- **LOW**: `GPT-5 mini` → fallback `Claude Sonnet 4.6`
-
-Agents live in `~/.copilot/agents/` (`*.agent.md`). The `/pr-prep` prompt and its supporting skill reference docs (`commit-pr-writer`, `diff-digest`) live alongside this file in the user prompts folder (`${userHome}/Library/Application Support/Code/User/prompts/`).
+Agents live in `~/.copilot/agents/` (`*.agent.md`). Prompts and supporting skills live in `${userHome}/Library/Application Support/Code/User/prompts/`.
 

@@ -15,15 +15,7 @@ Write a self-review report to `./.pr-review/<branch-name>-<N>.md`, where `<N>` i
 The report should cover:
 - Summary of the change in plain English.
 - File-by-file walkthrough of the diff.
-- Risks. **You are the risk-surfacing layer** — there are no specialist review agents in this fleet, so be thorough. Inline scan for:
-  - **Auth / authorization** — added/removed/loosened checks, role changes, missing `requireAuth` style guards.
-  - **PII & student data (FERPA / COPPA)** — fields named like `email`, `dob`, `ssn`, `student_id`, `grade`, logs that include user data, new third-party data egress (analytics, AI APIs, webhooks).
-  - **Secrets** — hardcoded tokens, API keys, passwords, private keys, `.env` content committed.
-  - **DB migrations** — destructive ops (`DROP`, `TRUNCATE`, `RENAME`), non-concurrent index creation, `NOT NULL` adds without defaults/backfill, type narrowing, missing rollback. Migrations touching student records (grades, rosters, attendance) get a louder callout.
-  - **Public API surface** — renamed/removed endpoints, changed response shapes, removed query params.
-  - **Performance** — N+1 queries, unbounded loops/queries, `SELECT *`, sequential `await`s in a loop, large in-memory loads.
-  - **Accessibility** (if UI changed) — missing `alt`, unlabeled form controls, removed focus outlines, non-interactive elements with `onClick`, positive `tabindex`.
-  - **Debug / dev leftovers** — `console.log`, `debugger`, `TODO`, commented-out code, test-only flags left on.
+- Risks. **You are the risk-surfacing layer** — there are no specialist review agents in this fleet, so be thorough. Work the **Human-judgment review checklist** in the diff-digest skill (auth, PII / student data, secrets, DB migrations, public API surface, performance, accessibility, debug leftovers) — that section is the authoritative list of what to scan for. Confirm or dismiss each category with a one-line reason; migrations touching student records get a louder callout.
 - Test coverage assessment — what's tested, what isn't, what should be.
 - Open questions for the reviewer.
 

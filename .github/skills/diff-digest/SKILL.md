@@ -59,5 +59,17 @@ uncommitted work. Ask only if it's genuinely ambiguous.
 3. Feed the digest into the review. If the **PR Prep** prompt invoked this skill, use the digest to produce the structured self-review (change summary, inventory, sequence/dependencies, business-logic changes, ranked risks, author checklist).
 4. The script flags patterns; **you** still judge business-logic correctness and blast radius — the scan can't.
 
+## Human-judgment review checklist
+The automated flags above are pattern-based leads. Beyond them, **you** must scan for the following — the regex can't catch intent. This is the single source of truth for the review checklist; `/pr-prep` and `/pr-review` both reference it rather than maintaining their own copies.
+
+- **Auth / authorization** — added/removed/loosened checks, role changes, missing `requireAuth`-style guards.
+- **PII & student data (FERPA / COPPA)** — fields like `email`, `dob`, `ssn`, `student_id`, `grade`; logs that include user data; new third-party data egress (analytics, AI APIs, webhooks).
+- **Secrets** — hardcoded tokens, API keys, passwords, private keys, `.env` content committed.
+- **DB migrations** — destructive ops (`DROP`, `TRUNCATE`, `RENAME`), non-concurrent index creation, `NOT NULL` adds without defaults/backfill, type narrowing, missing rollback. Migrations touching student records (grades, rosters, attendance) get a louder callout.
+- **Public API surface** — renamed/removed endpoints, changed response shapes, removed query params.
+- **Performance** — N+1 queries, unbounded loops/queries, `SELECT *`, sequential `await`s in a loop, large in-memory loads.
+- **Accessibility** (if UI changed) — missing `alt`, unlabeled form controls, removed focus outlines, non-interactive elements with `onClick`, positive `tabindex`.
+- **Debug / dev leftovers** — `console.log`, `debugger`, `TODO`, commented-out code, test-only flags left on.
+
 ## Notes
 - The script never mutates the repo. If git history isn't available (e.g. shallow clone missing the base), fetch the base branch first or compare against a ref that exists locally.
