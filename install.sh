@@ -43,11 +43,10 @@ remove() {  # remove <linkpath> (only if it's a symlink)
 
 (( DRY_RUN )) || mkdir -p "$PROMPTS" "$COPILOT"
 
-# --- Agents: single canonical source = ~/.copilot/agents ---
+# --- Unified agent: single canonical source = ~/.copilot/agents ---
+# Copilot ships with one agent (main.agent.md) that routes to skills.
 # VS Code also scans this location, so one link serves both CLI and Chat.
 link "$GH/agents" "$COPILOT/agents"
-# Remove the DUPLICATE agents link in the prompts folder (was causing each
-# agent to appear twice in VS Code's picker).
 remove "$PROMPTS/agents"
 
 # --- Global instructions + skills (whole-dir) ---

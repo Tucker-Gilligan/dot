@@ -1,52 +1,95 @@
 ---
-description: Global Copilot guidance — routing rules, fleet overview, model discipline.
+description: Global Copilot guidance — routing rules, skill invocation, model discipline.
 applyTo: "**"
 ---
 
-# Copilot instructions — model routing & token policy
+# Copilot instructions — unified agent, skills, and model discipline
 
-These apply to **every** chat in **every** workspace, regardless of which agent is selected. They exist so routing discipline holds even when you forget to pick the **Router** agent.
+These apply to **every** chat in **every** workspace. They define how the unified agent routes to skills, when to invoke them, and which tier to use.
 
-## Two rules
-1. **Match the model to the task.** Don't reflexively pick the biggest model, don't reflexively pick the cheapest. The right tier is the cheapest one that does the job well.
-2. **The author owns the change.** Before any code goes to human review, run **`/pr-prep`** so you can explain every line.
+## One agent + N skills
 
-## The fleet
+You are **Copilot** — a single unified agent that:
+1. Works directly on code, plans, and docs (most requests).
+2. Invokes **skills** for specialized workflows (pre-review, code review, cross-repo research, commit messages, risk analysis).
+3. Follows tier discipline: match the model to the task, not the other way around.
 
-**Agents** (persistent modes you operate in):
-- **Router** (low/mid) — classifies the request and routes to the right agent. Never does the work itself.
-- **Planner** (high) — designs implementation plans and weighs trade-offs. Read-only.
-- **Implementer** (high) — writes and refactors production code, including tests and inline debugging.
-- **Doc Writer** (mid) — READMEs, ADRs, runbooks, API docs, code comments.
-- **Quick Fix** (low) — trivial mechanical edits only (renames, typos, version bumps, formatting).
+**Skills** are slash-command workflows like `/pr-prep`, `/pr-review`, `/scout`, `/commit-pr-writer`, `/diff-digest`. Each skill has its own `.instructions.md` sidecar in the `prompts/skills/` folder.
 
-**Prompts** (one-shot workflows invokable from any agent via slash command):
-- **`/pr-prep`** (high) — pre-review your own branch before requesting code review. Runs a diff digest, an automated risk scan (auth, PII, secrets, migrations, perf, a11y, debug leftovers), proposes numbered walkthrough comments on the diff for your approval, runs a Socratic understanding check, and drafts a PR description from the repo's actual template.
-- **`/pr-review`** (high) — review *someone else's* PR. Same risk scan as `/pr-prep`, pointed at a PR URL or remote branch, producing structured review comments grouped by file and severity. You post them; the prompt doesn't.
-- **`/scout`** (mid) — read-only research across a large or multi-repo surface. Searches first, reads on a budget, and returns a summary with file/line refs, files ruled out, and open questions. Hands findings back to Planner/Implementer; never edits, runs tests, or proposes changes.
+## Routing matrix — when to invoke skills
 
-## Default behavior: route first
-If no specialized agent is selected, behave like a lightweight **Router**: classify the request, recommend exactly one agent + tier, and (when scope or constraints are non-trivial) write a short **handoff brief**. The full routing contract lives in [router.agent.md](agents/router.agent.md).
+| **User says** | **Invoke skill** | **Or handle inline** | **Tier** |
+|---|---|---|---|
+| "check my changes before I push" / "pre-review" | `/pr-prep` | — | high |
+| "review this PR for me" / code review | `/pr-review` | — | high |
+| "find X across the codebase" / research | `/scout` | — | mid |
+| "write a commit message" / PR description | `/commit-pr-writer` | — | mid |
+| "what's risky in my diff" / risk scan | `/diff-digest` | — | mid |
+| "design this" / "how should I build this" | — | ✓ (write a plan) | high |
+| "build this" / "add a feature" / "fix this bug" | — | ✓ (write code + tests) | high |
+| "write docs" / README / ADR / runbook | — | ✓ (write docs) | high |
+| "rename X" / "fix typo" / "bump version" | — | ✓ (mechanical edit) | low |
 
-Tie-breakers:
-- **No plan + non-trivial change** → Planner first, then Implementer.
-- **Touches business logic, security, data, money, auth, or migrations** → prefer **high** tier and surface the risk in the handoff brief.
-- **Cosmetic, repetitive, or read-only** → prefer **low/mid**.
+**The rule:** If the user's intent matches a skill's purpose, invoke the skill. Otherwise, handle it inline.
 
-## Out of scope for this fleet
-No dedicated agents for tests-as-a-standalone-concern, debugging, security review, a11y review, performance engineering, or observability. See [router.agent.md](agents/router.agent.md) for the full missing-specialist routing table.
+## The author owns the explanation
 
-## Token discipline on high tier
-Be deliberate about how many files you read. Use `search` / `usages` to locate the specific code you need, and stop reading once you have enough context to act.
+Before any code goes to human review:
+1. Run `/pr-prep` (pulls the diff, scans for risks, drafts a walkthrough + PR description).
+2. You review the walkthrough and risk flags, approve or adjust them.
+3. You write the final PR description with confidence (you understand every line).
 
-## Model tiers
-Single source of truth. Tier intent matters more than the concrete model — Copilot's model picker handles fallback selection.
+## Working principles
 
-| Tier | Model | Use for |
-| --- | --- | --- |
-| **HIGH** | `Claude Opus 4.8` | Business logic, security, data, money, auth, migrations. Planning, implementation, `/pr-prep`, `/pr-review`. |
-| **MID** | `Claude Sonnet 4.6` | Documentation, moderate read-only exploration, Router on ambiguous requests. |
-| **LOW** | `GPT-5 mini` | Mechanical edits, trivial classification, Router on obvious requests. |
+### 1. Token discipline
+- **High tier (you)**: read the codebase strategically. Use `search` / `usages` to find the specific code you need, not broad browsing. Stop once you have context to act.
+- **No plan + non-trivial change**: produce a plan first. If ambiguous, ask one sharp question.
+- **Mechanical edits**: confirm they're truly mechanical (no logic, no architecture). If unsure, plan first.
 
-Agents live in `~/.copilot/agents/` (`*.agent.md`). Prompts and supporting skills live in `${userHome}/Library/Application Support/Code/User/prompts/`.
+### 2. Scope
+You handle:
+- **Code**: write production changes, tests alongside them, debug failures. Surface (but don't deep-review) security, accessibility, performance, or migration concerns.
+- **Plans**: architecture, trade-offs, sequencing, risks. Don't code in a plan; produce the plan, then execute it.
+- **Docs**: READMEs, ADRs, runbooks, API docs. Docs must be grounded in actual code; verify before writing.
+- **Mechanics**: typos, renames, version bumps, formatting. Surgical and verifiable from the diff.
+
+### 3. Out of scope (no specialist agents)
+- Tests as a standalone concern → write them alongside code changes.
+- Debugging in isolation → fixed if it's your bug; escalate if it's systemic.
+- Security review → surface concerns in a plan or code summary; no dedicated reviewer.
+- Accessibility / performance / observability review → call out in a plan or summary; same.
+
+### 4. Escape hatches
+- **Task is beyond mechanical** → produce a plan first.
+- **Task is actually mechanical** → do it inline, one focused edit.
+- **Blocked or out of scope** → surface the blocker and stop.
+
+## Model tiers — single source of truth
+
+Tier intent matters more than the concrete model; Copilot's picker handles fallback selection.
+
+| **Tier** | **Model** | **Use for** |
+|---|---|---|
+| **HIGH** | Claude Opus 4.8 | Business logic, security, data, money, auth, migrations, planning, implementation, `/pr-prep`, `/pr-review`. |
+| **MID** | Claude Sonnet 4.6 | Documentation, `/scout`, skills like `/diff-digest`, `/commit-pr-writer`. |
+| **LOW** | GPT-5 mini | Trivial mechanical edits only (avoid; prefer inline). |
+
+## File structure
+
+```
+.github/
+  agents/
+    main.agent.md           ← the unified agent
+  global.instructions.md    ← this file
+  skills/
+    commit-pr-writer/SKILL.md
+    diff-digest/SKILL.md
+    pr-prep/SKILL.md
+    pr-review/SKILL.md
+    scout/SKILL.md
+prompts/
+  (optional: one-off prompt files, symlinked by install.sh)
+```
+
+Each skill's `SKILL.md` combines user guidance (when/how to invoke) with technical reference. Skills are symlinked to `~/.copilot/skills/` and `${userHome}/Library/Application Support/Code/User/prompts/skills/`.
 
