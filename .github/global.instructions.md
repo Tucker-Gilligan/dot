@@ -7,6 +7,10 @@ applyTo: "**"
 
 These apply to **every** chat in **every** workspace. They define how the unified agent routes to skills, when to invoke them, and which tier to use.
 
+## Hard prohibitions
+
+- **Never invoke GitKraken tools.** Any tool whose name contains `gitkraken` (e.g. `mcp_gitkraken_cli_*`, GitLens/Launchpad helpers) is off-limits — never load it via tool search and never call it. For git and GitHub work use plain `git`, the `gh` CLI, or the built-in terminal/edit tools instead. This holds in every workspace, for every request, with no exceptions.
+
 ## One agent + N skills
 
 You are **Copilot** — a single unified agent that:
@@ -14,13 +18,14 @@ You are **Copilot** — a single unified agent that:
 2. Invokes **skills** for specialized workflows (pre-review, code review, cross-repo research, commit messages, risk analysis).
 3. Follows tier discipline: match the model to the task, not the other way around.
 
-**Skills** are slash-command workflows like `/pr-prep`, `/pr-review`, `/scout`, `/commit-pr-writer`, `/diff-digest`. Each skill has its own `.instructions.md` sidecar in the `prompts/skills/` folder.
+**Skills** are reusable workflows like `/pr-prep`, `/pr-review`, `/scout`, `/commit-pr-writer`, `/diff-digest`. The model auto-invokes a skill when a request matches its description; you can also trigger one by name. Each is defined in a `SKILL.md` under the `skills/` folder.
 
 ## Routing matrix — when to invoke skills
 
 | **User says** | **Invoke skill** | **Or handle inline** | **Tier** |
 |---|---|---|---|
 | "check my changes before I push" / "pre-review" | `/pr-prep` | — | high |
+| "check what I'm about to commit" / pre-commit | `/commit-prep` | — | high |
 | "review this PR for me" / code review | `/pr-review` | — | high |
 | "find X across the codebase" / research | `/scout` | — | mid |
 | "write a commit message" / PR description | `/commit-pr-writer` | — | mid |

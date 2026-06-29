@@ -32,8 +32,10 @@ Review someone else's PR with structured, severity-ranked comments and automated
 4. **Produces structured review comments**:
    - Grouped by file and severity (blocker, important, nice-to-have).
    - Each comment explains the concern and suggests a fix.
-   - Callouts for risky patterns (auth, PII, migrations, performance).
-5. **Returns the review** (you post it to GitHub; the skill doesn't).
+   - Each comment links the exact file/line (`path#Lstart-Lend`) for quick reference.
+5. **Requires a student-data / FERPA section**: every review explicitly states whether the diff touches PII, student records (grades, rosters, attendance), or destructive migrations on those tables — even if the answer is "none." This is the differentiator from a generic reviewer; never omit it.
+6. **Confirms or dismisses every automated flag**: each `[FLAG]` from the diff-digest scan gets a one-line confirm/dismiss with a reason — no silent passes on secrets, removed auth, or raw SQL.
+7. **Returns the review** (you post it to GitHub; the skill doesn't).
 
 ## Comment format
 
@@ -44,15 +46,23 @@ Comments are grouped by severity:
 - **Nice-to-have** — optional improvements (naming, style, documentation).
 
 Each comment includes:
-- The line(s) in question.
+- A markdown link to the line(s) in question (`path#Lstart-Lend`).
 - What's wrong or what could be better.
 - A suggested fix (if applicable).
+
+For the full set of things to scan beyond the automated flags (auth, PII/student data, migrations, API surface, performance, accessibility), use the **diff-digest** skill's `Human-judgment review checklist` — it is the single source of truth; don't restate it here.
 
 ## How to use the output
 
 1. **Copy the comments**: the skill generates them; you post them to GitHub.
 2. **You author the review**: Add a summary at the top (what's good about this PR, one-line theme).
 3. **Request changes or approve**: GitHub handles that; the skill just gives you the bullets.
+
+## How this differs from the default GitHub Copilot reviewer
+
+- **Domain-specific**: a required FERPA/COPPA + student-data section the stock reviewer won't reliably produce.
+- **Deterministic**: runs the diff-digest pattern scan (secrets, removed auth, raw SQL, destructive migrations) and forces each flag to be confirmed or dismissed — rule-based, not just model-inferred.
+- **You author it**: runs locally/read-only and hands you a draft to post, rather than auto-commenting as a bot.
 
 ## Notes
 

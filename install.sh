@@ -54,7 +54,8 @@ link "$GH/global.instructions.md" "$PROMPTS/global.instructions.md"
 link "$GH/skills" "$PROMPTS/skills"
 
 # --- Prompts: link EVERY *.prompt.md so new ones are picked up automatically ---
-for f in "$GH"/prompts/*.prompt.md; do
+# (N) null-glob qualifier: don't error when there are no prompt files.
+for f in "$GH"/prompts/*.prompt.md(N); do
   link "$f" "$PROMPTS/${f:t}"
 done
 

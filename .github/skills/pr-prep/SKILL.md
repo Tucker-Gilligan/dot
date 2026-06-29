@@ -1,6 +1,6 @@
 ---
 name: pr-prep
-description: Pre-review your own branch before requesting code review. Runs a diff digest, automated risk scan, produces a walkthrough with numbered comments, runs a Socratic understanding check, and drafts a PR description from your repo's template.
+description: Pre-review your own branch before requesting code review. Runs a diff digest, automated risk scan, produces a walkthrough with numbered in-code comments, runs a Socratic understanding check, and drafts a PR description from your repo's template.
 argument-hint: "[base-branch] (optional, e.g. main; auto-detects otherwise)"
 ---
 
@@ -32,8 +32,8 @@ Complete pre-review of your own branch before requesting code review. Validates 
 
 1. **Runs `/diff-digest`**: gathers the diff, surfaces automated risk patterns.
 2. **Scans for risk** (auth, PII, secrets, migrations, debug leftovers, oversized changes).
-3. **Produces a numbered walkthrough**: for each risky change, a comment explaining the intent.
-4. **Socratic check**: asks you clarifying questions about your changes to confirm you understand them.
+3. **Produces a numbered walkthrough**: inserts a sequenced `// [n] ...` comment at each risky change explaining the intent, so the numbering follows the order of changes through the diff.
+4. **Socratic check**: asks 2–4 targeted questions, scoped only to the items flagged risky, to confirm you understand them.
 5. **Drafts a PR description**: fills your repo's actual `PULL_REQUEST_TEMPLATE.md` or generates a structured description.
 6. **Prompts for missing details**: ticket links, rollout plans, screenshots, testing notes.
 
@@ -44,19 +44,9 @@ Complete pre-review of your own branch before requesting code review. Validates 
 3. **Approve the PR description**: The skill drafts it; you finalize it.
 4. **You own the explanation**: Before you push, you've thought through every line. That's the whole point.
 
-## Risk checklist (automated + manual)
+## Risk checklist
 
-**Automated checks**: debug leftovers, secrets, auth changes, migrations, oversized diffs, disabled tests.
-
-**Manual verification you must do**:
-- Auth & permission logic changes
-- PII & student data exposure
-- Secrets committed
-- DB migrations and rollback plans
-- API surface changes (breaking changes)
-- Performance implications (N+1, unbounded queries)
-- Accessibility changes
-- Any business-logic changes
+Use the single-source checklist in the **diff-digest** skill (`Human-judgment review checklist` plus its automated flags) — auth, PII/student data, secrets, migrations, API surface, performance, accessibility, debug leftovers. Don't maintain a parallel copy here; diff-digest is the source of truth and `/pr-prep` runs it as step 1.
 
 ## Notes
 
