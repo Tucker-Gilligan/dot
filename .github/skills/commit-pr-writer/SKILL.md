@@ -74,4 +74,4 @@ Default format (when no repo template exists):
 - Derive everything from the diff. Don't invent changes that aren't there, and don't omit ones that are.
 - Keep it scannable — a reviewer should grasp the PR in 20 seconds.
 - If the diff suggests an undocumented behavior change, surface it rather than smoothing it over.
-- For a full risk pass before review, use the **diff-digest** skill / **PR Prep** prompt; this skill is about the write-up, not the audit.
+- For a full risk pass before review, use the **diff-digest** or **pr-prep** skill; this skill is about the write-up, not the audit.

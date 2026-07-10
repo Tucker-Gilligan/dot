@@ -1,6 +1,6 @@
 ---
 name: diff-digest
-description: Produce a token-efficient digest of pending git changes (stat, changed files, full diff) plus an automated risk-pattern scan (debug leftovers, secrets, removed auth, raw SQL, destructive migrations, oversized changes). Use before code review, when preparing a PR, or whenever asked "what's risky in my diff" / "review my changes". Pairs with the `/pr-prep` prompt.
+description: Produce a token-efficient digest of pending git changes (stat, changed files, full diff) plus an automated risk-pattern scan (debug leftovers, secrets, removed auth, raw SQL, destructive migrations, oversized changes). Use before code review, when preparing a PR, or whenever asked "what's risky in my diff" / "review my changes". Pairs with the `/pr-prep` skill.
 argument-hint: "[base-branch] (optional, e.g. main)"
 ---
 
@@ -12,7 +12,7 @@ so the model spends tokens on judgment — not on reading the raw diff line by l
 ## When to use
 - Preparing a PR / pre-review self-check.
 - Any request like "what changed", "what's risky here", "review my diff before I push".
-- As the first step the **PR Prep** prompt runs.
+- As the first step the **pr-prep** skill runs.
 
 ## How to run
 The script ([scripts/collect-diff.sh](./scripts/collect-diff.sh)) lives in this user-level prompts folder, **outside the user's code repo**. Invoking it by absolute path from a `runInTerminal` call inside the user's repo triggers a cross-workspace permission prompt. To avoid that, the agent must **inline the script body via a heredoc** so the terminal command contains no path outside the active repo.
@@ -56,7 +56,7 @@ uncommitted work. Ask only if it's genuinely ambiguous.
 ## How to use the output
 1. Run the script and read its output.
 2. Treat each `[FLAG]` as something to confirm or dismiss with a one-line reason — never ignore silently. False positives are fine to wave off explicitly.
-3. Feed the digest into the review. If the **PR Prep** prompt invoked this skill, use the digest to produce the structured self-review (change summary, inventory, sequence/dependencies, business-logic changes, ranked risks, author checklist).
+3. Feed the digest into the review. If the **pr-prep** skill invoked this one, use the digest to produce the structured self-review (change summary, inventory, sequence/dependencies, business-logic changes, ranked risks, author checklist).
 4. The script flags patterns; **you** still judge business-logic correctness and blast radius — the scan can't.
 
 ## Human-judgment review checklist
