@@ -34,13 +34,18 @@ Use **`/pr-prep`** instead when you're done with the whole branch and about to o
 
 1. **Runs `/diff-digest` on the staged set**: gathers the staged diff and surfaces automated risk patterns. With `--all`, includes unstaged tracked changes too.
 2. **Scans for risk** (auth, PII, secrets, migrations, debug leftovers, oversized changes) — the same single-source checklist diff-digest owns.
-3. **Produces a numbered walkthrough**: inserts a sequenced `// [n] ...` comment at each risky change explaining the intent, so the numbering follows the order of changes through the staged diff.
+3. **Produces a numbered walkthrough you can read like your IDE**: for each risky staged change, render a fenced code block showing the actual code — not just a description of it — so reviewing feels like scrolling the file in the editor. Each block must include:
+   - A clickable header link to the location: `[path/to/file.ext:Lstart-Lend](path/to/file.ext#Lstart-Lend)`.
+   - The relevant lines fenced with the **correct language tag** for syntax highlighting (` ```ts `, ` ```py `, etc.).
+   - **2–4 lines of surrounding context** above and below the changed line(s) so the snippet reads in place.
+   - A sequenced `// [n] ...` annotation on the exact line, in the file's comment syntax, explaining the intent/risk.
+   Number the blocks in the order they appear through the staged diff, so the author can review every flagged change without leaving the chat.
 4. **Atomicity check**: flags whether the staged set is a single coherent change or bundles unrelated work that should be split into separate commits.
 5. **Drafts the commit message**: hands off to **`/commit-pr-writer`** to generate a Conventional Commits message from the actual staged diff, matching the repo's existing commit style.
 
 ## How to use the output
 
-1. **Review the walkthrough**: Does each staged change make sense? Are the risk assessments fair?
+1. **Review the walkthrough**: each staged change is shown as a code snippet with its file/line header — read it like your editor. Does each change make sense? Are the risk assessments fair?
 2. **Act on the atomicity flag**: if the change bundles unrelated work, unstage and split before committing.
 3. **Approve the commit message**: the skill drafts it; you finalize and commit.
 4. **You own the commit**: you've thought through every staged line before it lands in history.
