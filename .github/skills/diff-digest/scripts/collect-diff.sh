@@ -5,7 +5,8 @@
 #   - git diff stat + changed-file list
 #   - the full diff (capped, see MAX_DIFF_LINES)
 #   - pattern-based risk flags (debug leftovers, secrets, removed auth, raw SQL,
-#     destructive migrations, dependency changes, oversized changes)
+#     ESLint suppressions, destructive migrations, dependency changes, generated
+#     artifacts, broad changes)
 #
 # Usage:
 #   collect-diff.sh                 # uncommitted changes (working tree + staged) vs HEAD
@@ -109,6 +110,42 @@ _before="$(mktemp)"; : > "$_before"
 if [ -s "$_before" ]; then FLAGGED=1; fi
 rm -f "$_before"
 
+# ESLint suppressions need file-aware matching so examples in Markdown do not
+# trigger the scan. Flag inline directives, ignored-file configuration, disabled
+# rules in ESLint config files, and generated suppression baselines.
+ESLINT_SUPPRESSIONS="$(
+  printf '%s\n' "$DIFF" | awk '
+    /^\+\+\+ b\// {
+      file = substr($0, 7)
+      next
+    }
+    /^\+/ && !/^\+\+\+/ {
+      line = substr($0, 2)
+      is_docs = file ~ /\.(md|mdx|rst|txt)$/
+      is_eslint_config = file ~ /(^|\/)(eslint\.config\.[^\/]+|\.eslintrc(\.[^\/]+)?)$/
+      is_ignore_file = file ~ /(^|\/)\.eslintignore$/
+      is_suppression_file = file ~ /(^|\/)\.?eslint-suppressions\.json$/
+      is_package = file ~ /(^|\/)package\.json$/
+
+      if (!is_docs && line ~ /eslint-disab(le(-next-line|-line)?)/) {
+        print file ": " line
+      } else if (!is_docs && line ~ /eslint/ && line ~ /--(suppress-all|suppress-rule|suppressions-location|ignore-pattern|quiet)([[:space:]=]|$)/) {
+        print file ": " line
+      } else if (is_ignore_file || is_suppression_file) {
+        print file ": " line
+      } else if ((is_eslint_config || is_package) && line ~ /(eslintIgnore|ignorePatterns|globalIgnores|ignores)[[:space:]]*[:"(]/) {
+        print file ": " line
+      } else if ((is_eslint_config || is_package) && line ~ /:[[:space:]]*["\047]?(off|0)["\047]?[[:space:]]*[,}]/) {
+        print file ": " line
+      }
+    }
+  ' || true
+)"
+if [ -n "$ESLINT_SUPPRESSIONS" ]; then
+  printf '\n[FLAG] New ESLint suppression — remove it and fix the underlying lint violation:\n%s\n' "$ESLINT_SUPPRESSIONS"
+  FLAGGED=1
+fi
+
 # Destructive migrations: check changed file paths + destructive keywords in added lines.
 MIGRATION_FILES="$(printf '%s\n' "$DIFF" | grep -iE '^\+\+\+ .*(migrat|schema)' || true)"
 DESTRUCTIVE="$(printf '%s\n' "$ADDED" | grep -nEi '(DROP (TABLE|COLUMN|DATABASE)|TRUNCATE|ALTER TABLE .*DROP|remove_column|drop_table|drop_column)' || true)"
@@ -130,6 +167,19 @@ fi
 TOTAL_CHANGED="$(printf '%s\n' "$ADDED$REMOVED" | grep -c . || true)"
 if [ "${TOTAL_CHANGED:-0}" -gt 800 ]; then
   printf '\n[FLAG] Large change (~%s changed lines) — consider splitting into smaller PRs.\n' "$TOTAL_CHANGED"
+  FLAGGED=1
+fi
+
+# Change-shape heuristics. These are prompts for author judgment, not verdicts.
+CHANGED_FILE_COUNT="$(printf '%s\n' "$DIFF" | grep -E '^diff --git ' | wc -l | tr -d ' ')"
+if [ "${CHANGED_FILE_COUNT:-0}" -gt 15 ]; then
+  printf '\n[FLAG] Broad change (%s files) — classify each file as required, supporting, or incidental; consider splitting unrelated work.\n' "$CHANGED_FILE_COUNT"
+  FLAGGED=1
+fi
+
+ARTIFACT_FILES="$(printf '%s\n' "$DIFF" | grep -E '^diff --git .*\.(min\.(js|css)|map|lock)$|^diff --git .*/(dist|build|coverage|vendor)/' || true)"
+if [ -n "$ARTIFACT_FILES" ]; then
+  printf '\n[FLAG] Generated/build artifacts changed — confirm they are required and reproducible from source:\n%s\n' "$ARTIFACT_FILES"
   FLAGGED=1
 fi
 

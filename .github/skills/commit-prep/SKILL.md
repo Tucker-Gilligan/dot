@@ -33,7 +33,7 @@ Use **`/pr-prep`** instead when you're done with the whole branch and about to o
 ## What it does
 
 1. **Runs `/diff-digest` on the staged set**: gathers the staged diff and surfaces automated risk patterns. With `--all`, includes unstaged tracked changes too.
-2. **Scans for risk** (auth, PII, secrets, migrations, debug leftovers, oversized changes) — the same single-source checklist diff-digest owns.
+2. **Scans for risk and maintainability** (auth, PII, secrets, migrations, debug leftovers, code smells, unnecessary dependencies, and oversized or broad changes) — the same single-source checklist diff-digest owns.
 3. **Produces a numbered walkthrough you can read like your IDE**: for each risky staged change, render a fenced code block showing the actual code — not just a description of it — so reviewing feels like scrolling the file in the editor. Each block must include:
    - A clickable header link to the location: `[path/to/file.ext:Lstart-Lend](path/to/file.ext#Lstart-Lend)`.
    - The relevant lines fenced with the **correct language tag** for syntax highlighting (` ```ts `, ` ```py `, etc.).

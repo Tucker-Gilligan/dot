@@ -30,7 +30,7 @@ Review someone else's PR with structured, severity-ranked comments and automated
 2. **Runs the same risk scan as `/diff-digest`**: flags debug leftovers, secrets, migrations, auth changes, etc.
 3. **Reads the PR template and context**: understands what was promised in the description.
 4. **Produces structured review comments**:
-   - Grouped by file and severity (blocker, important, nice-to-have).
+   - Grouped by file and severity (blocker, important, nice-to-have), including maintainability and scope/bloat findings.
    - Each comment explains the concern and suggests a fix.
    - Each comment links the exact file/line (`path#Lstart-Lend`) for quick reference.
 5. **Requires a student-data / FERPA section**: every review explicitly states whether the diff touches PII, student records (grades, rosters, attendance), or destructive migrations on those tables — even if the answer is "none." This is the differentiator from a generic reviewer; never omit it.

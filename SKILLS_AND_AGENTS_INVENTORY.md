@@ -30,12 +30,18 @@ These six skills live in `.github/skills/` and are symlinked by `install.sh`.
 
 #### 3. **diff-digest**
   - Shows stat, changed files, full diff
-  - Automated risk scan: debug leftovers, secrets, removed auth, raw SQL, destructive migrations, oversized changes
+  - Automated risk scan: debug leftovers, new ESLint suppressions, secrets, removed auth, raw SQL, destructive migrations, generated artifacts, broad changes
+  - Human review checklist for code smells, scope/bloat, data/state contracts, side effects, owning tests, and change-shape confidence
   - Pairs with `/pr-prep` skill
 
 #### 4. **pr-prep**
   - Runs diff digest
   - Automated risk scan
+  - Explicit scope and code-smell check with a `ready`, `ready with follow-up`, or `not ready` verdict
+  - Proportionally traces cross-boundary or unclear behavior through producers, consumers, state, side effects, conditional work, and owning tests
+  - Rejects new ESLint suppressions unless the user explicitly approves and documents an exceptional case
+  - Requires `verified`, `finding`, or justified `not applicable` trace evidence and a closure gate before returning `ready`
+  - Optional `--document` mode writes each outcome to a new timestamped `.pr-prep/*.md` report
   - Renders an IDE-style walkthrough: fenced code blocks with a clickable file/line header, correct language tag, surrounding context, and a sequenced annotation on each flagged line
   - Runs Socratic understanding check, with each question anchored to a clickable file/line link
   - Drafts PR description from repo template
