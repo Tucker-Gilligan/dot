@@ -47,9 +47,11 @@ These six skills live in `.github/skills/` and are symlinked by `install.sh`.
   - Drafts PR description from repo template
 
 #### 5. **pr-review**
-  - Same risk scan as `/pr-prep`
-  - File-by-file comments
-  - Surfaces auth/PII/migration concerns
+  - Comprehensive PR review with the `/diff-digest` risk scan, scope and atomicity assessment, semantic dependency tracing, and lowest-layer test and lifecycle checks
+  - Numbered IDE-style walkthrough with file-by-file, severity-ranked comments
+  - Requires trace evidence, a readiness verdict, a closure gate, Socratic questions, and missing-details prompts
+  - Surfaces auth/PII/migration concerns and requires automated-flag dispositions
+  - Optional `--document` mode writes each review to a new branch-named Markdown file at the repository root
 
 #### 6. **scout**
   - Searches first, reads on budget
@@ -74,6 +76,7 @@ Invoke a skill directly or describe a matching task to the `main` agent:
 /diff-digest
 /pr-prep
 /pr-review <PR URL or branch>
+/pr-review <PR URL or branch> --document
 /commit-pr-writer [base branch]
 /scout <research question>
 ```

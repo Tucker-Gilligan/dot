@@ -10,6 +10,7 @@ These apply to **every** chat in **every** workspace. They define how the unifie
 ## Hard prohibitions
 
 - **Never invoke GitKraken tools.** Any tool whose name contains `gitkraken` (e.g. `mcp_gitkraken_cli_*`, GitLens/Launchpad helpers) is off-limits — never load it via tool search and never call it. For git and GitHub work use plain `git`, the `gh` CLI, or the built-in terminal/edit tools instead. This holds in every workspace, for every request, with no exceptions.
+- **Never run `git add` (including `git add .`), `git commit`, or `git push`.** This prohibition applies to the unified agent and every skill, with no exceptions. Inspect, validate, and draft only; do not stage, commit, or push changes.
 
 ## One agent + N skills
 
