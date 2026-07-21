@@ -12,6 +12,9 @@
 global instructions and skills into the VS Code prompts directory. There are no
 project prompt files in `.github/prompts/`.
 
+For OpenCode, run `opencode/install.sh`. It symlinks the shared `.github/skills/`
+into `~/.config/opencode/skills/`. See `opencode/README.md` for details.
+
 ## Project Skills
 
 These six skills live in `.github/skills/` and are symlinked by `install.sh`.
