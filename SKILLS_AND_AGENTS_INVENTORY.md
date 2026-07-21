@@ -63,9 +63,23 @@ These six skills live in `.github/skills/` and are symlinked by `install.sh`.
 
 **Source:** `.github/agents/main.agent.md`
 
-Unified Copilot agent for inline coding tasks and project-skill routing. It
-inherits `.github/global.instructions.md`, which defines the routing matrix,
-model-tier guidance, and GitKraken-tool prohibition.
+Main orchestrator for inline coding tasks and project-skill routing. It can
+invoke the explicitly allowed `scout` and `reviewer` agents as read-only
+subagents.
+
+### `scout`
+
+**Source:** `.github/agents/scout.agent.md`
+
+Read-only repository research subagent. It is available to `main` but hidden
+from the normal agent picker.
+
+### `reviewer`
+
+**Source:** `.github/agents/reviewer.agent.md`
+
+Read-only diff and behavior review subagent. It is available to `main` but
+hidden from the normal agent picker.
 
 ## Invocation
 

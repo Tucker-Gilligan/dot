@@ -48,11 +48,11 @@ The output is **findings only** — use it to:
 - **Find examples**: see how similar things are done in your codebase.
 - **Answer architectural questions**: "where should this go?", "is there already a pattern for this?"
 
-**You decide the next step**: the skill hands off to you or another agent (Planner for design, Implementer for changes).
+**You decide the next step**: the main agent decides whether to plan, implement, or invoke another skill.
 
 ## Notes
 
 - **Read-only**: Scout never edits, runs tests, or proposes changes.
 - **Multi-repo capable**: works across GitHub or local clones if configured.
 - **Token-efficient**: uses search + targeted reads instead of loading entire files.
-- **Hands off**: after research, you route elsewhere (Planner for design, Implementer for changes).
+- **Hands off**: after research, return the findings to the main agent, which decides whether to plan, implement, or invoke another skill.
